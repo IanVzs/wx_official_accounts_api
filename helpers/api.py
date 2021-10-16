@@ -1,5 +1,6 @@
 import asyncio
 import aiohttp
+import requests
 import xmltodict
 
 
@@ -14,16 +15,16 @@ async def fetch_xml(session, url, data):
         result = xmltodict.parse(res)
         return result
 
-FETCH_MODE_DICT = {"xml": fetch_xml}
+FETCH_MODE_DICT = {"xml": fetch_xml, "json": fetch}
 async def to_nothing(*args, **kwargs):
     return ''
 
-async def request_api(url, data, method="GET", resp_type="xml"):
+async def _request_api(url, data=None, method="GET", resp_type="xml"):
     async with aiohttp.ClientSession() as session:
         res = await (FETCH_MODE_DICT.get(resp_type) or to_nothing)(session, url, data)
     return res
 
-async def request_apis(url, datas, method="GET"):
+async def _request_apis(url, datas, method="GET"):
     task_list = []
     async with aiohttp.ClientSession() as session:
         for data in datas:
@@ -33,8 +34,9 @@ async def request_apis(url, datas, method="GET"):
         await asyncio.gather(*task_list)
     return task_list
 
+
 def get_all_weather(url, datas):
-    weather_res = asyncio.run(request_apis(url, datas))
+    weather_res = asyncio.run(_request_apis(url, datas))
     results = []
     for i in weather_res:
         result = i.result()
@@ -42,5 +44,8 @@ def get_all_weather(url, datas):
     return results
 
 def get_all_weather_warning(url, data):
-    weather_res = asyncio.run(request_api(url, data))
+    weather_res = asyncio.run(_request_api(url, data))
     return weather_res
+
+def request_api(url):
+    return requests.get(url=url).json()

@@ -1,6 +1,7 @@
 fastapi
 uvicorn
+requests
 aiohttp
-python-multipart
 pycryptodome
 xmltodict
+sqlalchemy

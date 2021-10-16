@@ -2,9 +2,9 @@ import time
 import xmltodict
 from fastapi import Response
 
-from lib import access, config as lib_config
+from lib import access, config as lib_config, server
 
-def send_text_cont(fromu, tou, cont, nonce):
+def send_text_cont(fromu, tou, content, nonce):
     """
     send all text msg
     user_openid
@@ -19,7 +19,7 @@ def send_text_cont(fromu, tou, cont, nonce):
     <CreateTime>%d</CreateTime>
     <MsgType><![CDATA[text]]></MsgType>
     <Content><![CDATA[%s]]></Content>
-    </xml>""" % (fromu, tou, int(time.time()), cont)
+    </xml>""" % (fromu, tou, int(time.time()), content)
     encryper = access.WXBizMsgCrypt(lib_config.TOKEN, lib_config.ENCODINGAESKEY, lib_config.WXAPPID)
     # ret, encrypt_xml = encryper.encrypt_msg(reply_msg=reply_xml, nonce=nonce)
     ret, encrypt_xml = encryper.EncryptMsg(reply_xml, nonce)
@@ -50,6 +50,10 @@ def deal_wx_api(data, signature, timestamp, nonce):
             # rsp = wx_workers.wx_event(appid, data_dict)
         elif msg_type == "text":
             msg_content = data_dict.get("Content")
+            svr = server.Server()
+            a = svr.qa(msg_content)
+            if a:
+                return send_text_cont(user_openid, source_appid, a, nonce)
             return send_bank_response(nonce)
             # return send_text_cont(user_openid, source_appid, msg_content, nonce)
     return send_bank_response(nonce)
